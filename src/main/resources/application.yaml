@@ -4,32 +4,34 @@ server:
     context-path: /
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: digitalfix-ms-user
 
   datasource:
     url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/FREEPDB1}
-    username: ${DB_USERNAME:system}
-    password: ${DB_PASSWORD:}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 30000
 
-jpa:
-  database-platform: org.hibernate.dialect.Oracle12Dialect
-  hibernate:
-    ddl-auto: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    hibernate:
+      ddl-auto: validate
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
 
-flyway:
-  enabled: false
-  baseline-on-migrate: true
-  locations: classpath:db.migration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
 security:
   oauth2:
