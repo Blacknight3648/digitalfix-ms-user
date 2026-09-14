@@ -1,3 +1,56 @@
+server:
+  port: ${PORT:8081}
+  servlet:
+    context-path: /
+
 spring:
   application:
     name: digitalfix-ms-user
+
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/FREEPDB1}
+    username: ${DB_USERNAME:system}
+    password: ${DB_PASSWORD:}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+
+jpa:
+  database-platform: org.hibernate.dialect.Oracle12Dialect
+  hibernate:
+    ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+flyway:
+  enabled: false
+  baseline-on-migrate: true
+  locations: classpath:db.migration
+
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        issuer-uri: https://login.microsoftonline.com/${AZURE_TENANT_ID:common}/v2.0
+        audiences: ${AZURE_CLIENT_ID}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  operationsSorter: method
+
+management:
+  endpoint:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoints:
+    web:
+      show-details: always
+
