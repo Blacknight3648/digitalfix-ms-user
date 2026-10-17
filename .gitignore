@@ -32,5 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### Secretos: NUNCA versionar ###
 .env
-.env.*
+*.env
+!.env.example
+/wallet/
+**/wallet/
