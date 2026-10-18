@@ -29,7 +29,7 @@ COPY --from=builder /app/target/*.jar app.jar
 # Cambiar permisos al usuario sin privilegios
 USER appuser
 
-EXPOSE 8081
+EXPOSE 8082
 
 # Configuración de límites de memoria JVM
 ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

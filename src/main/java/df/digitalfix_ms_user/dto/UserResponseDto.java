@@ -16,6 +16,8 @@ public class UserResponseDto {
     // Nombres resueltos para el cliente
     private String nombreEmpresa;
     private String nombreRol;
+    // Código del rol (ADMIN, SUPERVISOR, ...): lo usa ms-login para autorizar por rol
+    private String codigoRol;
 
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
@@ -100,6 +102,14 @@ public class UserResponseDto {
 
     public void setNombreRol(String nombreRol) {
         this.nombreRol = nombreRol;
+    }
+
+    public String getCodigoRol() {
+        return codigoRol;
+    }
+
+    public void setCodigoRol(String codigoRol) {
+        this.codigoRol = codigoRol;
     }
 
     public LocalDateTime getFechaCreacion() {

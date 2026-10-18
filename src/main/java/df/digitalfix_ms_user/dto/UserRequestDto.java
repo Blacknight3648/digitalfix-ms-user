@@ -7,7 +7,8 @@ import jakarta.validation.constraints.Size;
 
 public class UserRequestDto {
 
-    @NotBlank(message = "El OID de Microsoft Entra ID es requerido")
+    // OID de Entra ID. Opcional: si se omite, el usuario queda pre-asignado y se
+    // vincula por correo en su primer login (UserServiceImpl.getOrProvisionCurrentUser).
     private String userEntraId;
 
     @NotBlank(message = "El email es requerido")

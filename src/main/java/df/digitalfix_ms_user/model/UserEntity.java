@@ -12,7 +12,9 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "USER_ENTRA_ID", nullable = false, length = 100, unique = true)
+    // OID de Entra ID (claim "oid"). Nulo solo para usuarios pre-asignados por correo
+    // que aún no inician sesión (ver V2 y UserServiceImpl.getOrProvisionCurrentUser).
+    @Column(name = "USER_ENTRA_ID", length = 100, unique = true)
     private String userEntraId;
 
     @Column(name = "EMAIL", nullable = false, length = 100, unique = true)

@@ -1,18 +1,21 @@
 package df.digitalfix_ms_user.controller;
 
+import df.digitalfix_ms_user.dto.RoleAssignmentDto;
 import df.digitalfix_ms_user.dto.UserRequestDto;
 import df.digitalfix_ms_user.dto.UserResponseDto;
+import df.digitalfix_ms_user.security.EntraTokenClaims;
 import df.digitalfix_ms_user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Las reglas de acceso están centralizadas en SecurityConfig (igual que en
+// ms-login): /me exige el scope de la API y el resto de las rutas, rol ADMIN.
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -23,42 +26,48 @@ public class UserController {
         this.userService = userService;
     }
 
-    // Endpoint principal para que el usuario consultado por el Token (su propio perfil)
+    // Perfil del usuario del token, identificado por su OID (claim "oid", el mismo
+    // que usa ms-login). En su primer login se vincula o se da de alta; ms-login
+    // lo consulta reenviando el JWT del usuario para resolver su rol.
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority('SCOPE_User.Read') or hasAuthority('SCOPE_User.Manage')")
     public ResponseEntity<UserResponseDto> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
-        String entraId = jwt.getSubject();
-        return ResponseEntity.ok(userService.getUserByEntraId(entraId));
+        return ResponseEntity.ok(userService.getOrProvisionCurrentUser(
+                EntraTokenClaims.userEntraId(jwt),
+                EntraTokenClaims.email(jwt),
+                EntraTokenClaims.givenName(jwt),
+                EntraTokenClaims.familyName(jwt)));
     }
 
-    // Operaciones CRUD (Solo accesibles con User.Manage)
-    
+    // Operaciones CRUD (solo ADMIN)
+
     @PostMapping
-    @PreAuthorize("hasAuthority('SCOPE_User.Manage')")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto dto) {
         return new ResponseEntity<>(userService.createUser(dto), HttpStatus.CREATED);
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_User.Manage')")
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_User.Manage')")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_User.Manage')")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequestDto dto) {
         return ResponseEntity.ok(userService.updateUser(id, dto));
     }
 
+    // Asigna un rol del catálogo (ADMIN, SUPERVISOR, TECNICO, CLIENTE, AUDITOR).
+    // ms-login lo refleja en un máximo de 5 minutos (caché de roles por usuario).
+    @PutMapping("/{id}/rol")
+    public ResponseEntity<UserResponseDto> assignRole(@PathVariable Long id, @Valid @RequestBody RoleAssignmentDto dto) {
+        return ResponseEntity.ok(userService.assignRole(id, dto.getCodigoRol()));
+    }
+
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_User.Manage')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUserLogical(id);
         return ResponseEntity.noContent().build();

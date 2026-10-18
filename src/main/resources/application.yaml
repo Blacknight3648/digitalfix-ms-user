@@ -5,7 +5,10 @@ server:
 
 spring:
   config:
-    import: optional:file:.env[.properties]
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:digitalfix-ms-user/.env[.properties]
+      - optional:file:../.env[.properties]
   application:
     name: digitalfix-ms-user
 

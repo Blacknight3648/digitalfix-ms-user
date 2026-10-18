@@ -12,4 +12,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByUserEntraIdAndEstado(String userEntraId, EntityStatus estado);
     Optional<UserEntity> findByEmailAndEstado(String email, EntityStatus estado);
     Optional<UserEntity> findByIdAndEstado(Long id, EntityStatus estado);
+    // Cualquier estado: un usuario dado de baja no debe volver a crearse solo al iniciar sesión.
+    Optional<UserEntity> findByUserEntraId(String userEntraId);
+    Optional<UserEntity> findByEmailIgnoreCase(String email);
 }

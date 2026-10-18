@@ -41,8 +41,8 @@ CREATE TABLE USUARIOS (
 );
 
 -- 4. ÍNDICES DE RENDIMIENTO (Para búsquedas rápidas tras el login)
-CREATE INDEX IDX_USUARIO_ENTRA_ID ON USUARIOS(USER_ENTRA_ID);
-CREATE INDEX IDX_USUARIO_EMAIL ON USUARIOS(EMAIL);
+-- No se crean índices aparte: UK_USUARIO_ENTRA_ID y UK_USUARIO_EMAIL ya generan
+-- un índice único sobre USER_ENTRA_ID y EMAIL, y repetirlos falla con ORA-01408.
 
 -- 5. DATOS SEMILLA BASE PARA ROLES
 INSERT INTO ROLES (CODIGO, NOMBRE, DESCRIPCION) VALUES ('ADMIN', 'Administrador General', 'Acceso completo al sistema de la PyME');
