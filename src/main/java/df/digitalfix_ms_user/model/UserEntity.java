@@ -29,8 +29,10 @@ public class UserEntity {
     @Column(name = "TELEFONO", length = 20)
     private String telefono;
 
-    @Column(name = "AREA", length = 80)
-    private String area;
+    // Catálogo AREAS (V4): antes era texto libre en la columna AREA.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_AREA")
+    private AreaEntity area;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_EMPRESA", nullable = false)
@@ -105,11 +107,11 @@ public class UserEntity {
         this.telefono = telefono;
     }
 
-    public String getArea() {
+    public AreaEntity getArea() {
         return area;
     }
 
-    public void setArea(String area) {
+    public void setArea(AreaEntity area) {
         this.area = area;
     }
 

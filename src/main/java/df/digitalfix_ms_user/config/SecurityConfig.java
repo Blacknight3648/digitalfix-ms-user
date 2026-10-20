@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,7 +31,7 @@ import java.util.Set;
 //   - Audience: el client ID de la API o api://<client ID>.
 // Reglas por ruta:
 //   - GET /api/user/me: cualquier usuario con el scope de la API.
-//   - Resto de /api/user/**: solo ADMIN (gestión de usuarios y roles).
+//   - Resto de /api/user/**: solo ADMIN o SUPERADMIN (gestión de usuarios y roles).
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -81,6 +83,15 @@ public class SecurityConfig {
                 .accessDeniedHandler(jsonSecurityErrorHandler));
 
         return http.build();
+    }
+
+    // SUPERADMIN hereda los permisos de todos los roles del caso (misma jerarquía
+    // que ms-login): hasRole("ADMIN") también deja pasar a un SUPERADMIN.
+    @Bean
+    static RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.withDefaultRolePrefix()
+                .role("SUPERADMIN").implies("ADMIN", "SUPERVISOR", "TECNICO", "CLIENTE", "AUDITOR")
+                .build();
     }
 
     @Bean

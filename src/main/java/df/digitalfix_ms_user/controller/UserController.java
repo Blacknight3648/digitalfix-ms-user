@@ -1,6 +1,10 @@
 package df.digitalfix_ms_user.controller;
 
+import df.digitalfix_ms_user.dto.AreaDto;
+import df.digitalfix_ms_user.dto.AreaRequestDto;
+import df.digitalfix_ms_user.dto.CompanyResponseDto;
 import df.digitalfix_ms_user.dto.RoleAssignmentDto;
+import df.digitalfix_ms_user.dto.RoleResponseDto;
 import df.digitalfix_ms_user.dto.UserRequestDto;
 import df.digitalfix_ms_user.dto.UserResponseDto;
 import df.digitalfix_ms_user.security.EntraTokenClaims;
@@ -36,6 +40,29 @@ public class UserController {
                 EntraTokenClaims.email(jwt),
                 EntraTokenClaims.givenName(jwt),
                 EntraTokenClaims.familyName(jwt)));
+    }
+
+    // Catálogos para los formularios de gestión de usuarios (solo ADMIN). Se
+    // declaran antes que /{id}: Spring prioriza la ruta literal sobre la variable.
+
+    @GetMapping("/roles")
+    public ResponseEntity<List<RoleResponseDto>> getRoles() {
+        return ResponseEntity.ok(userService.getAllRoles());
+    }
+
+    @GetMapping("/empresas")
+    public ResponseEntity<List<CompanyResponseDto>> getCompanies() {
+        return ResponseEntity.ok(userService.getActiveCompanies());
+    }
+
+    @GetMapping("/areas")
+    public ResponseEntity<List<AreaDto>> getAreas() {
+        return ResponseEntity.ok(userService.getActiveAreas());
+    }
+
+    @PostMapping("/areas")
+    public ResponseEntity<AreaDto> createArea(@Valid @RequestBody AreaRequestDto dto) {
+        return new ResponseEntity<>(userService.createArea(dto), HttpStatus.CREATED);
     }
 
     // Operaciones CRUD (solo ADMIN)

@@ -1,12 +1,19 @@
 package df.digitalfix_ms_user.service;
 
+import df.digitalfix_ms_user.dto.AreaDto;
+import df.digitalfix_ms_user.dto.AreaRequestDto;
+import df.digitalfix_ms_user.dto.CompanyResponseDto;
+import df.digitalfix_ms_user.dto.RoleResponseDto;
 import df.digitalfix_ms_user.dto.UserRequestDto;
 import df.digitalfix_ms_user.dto.UserResponseDto;
+import df.digitalfix_ms_user.exception.ConflictException;
 import df.digitalfix_ms_user.exception.ResourceNotFoundException;
+import df.digitalfix_ms_user.model.AreaEntity;
 import df.digitalfix_ms_user.model.CompanyEntity;
 import df.digitalfix_ms_user.model.RoleEntity;
 import df.digitalfix_ms_user.model.UserEntity;
 import df.digitalfix_ms_user.model.enums.EntityStatus;
+import df.digitalfix_ms_user.repository.AreaRepository;
 import df.digitalfix_ms_user.repository.CompanyRepository;
 import df.digitalfix_ms_user.repository.RoleRepository;
 import df.digitalfix_ms_user.repository.UserRepository;
@@ -28,11 +35,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final RoleRepository roleRepository;
+    private final AreaRepository areaRepository;
 
-    public UserServiceImpl(UserRepository userRepository, CompanyRepository companyRepository, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, CompanyRepository companyRepository,
+                           RoleRepository roleRepository, AreaRepository areaRepository) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.roleRepository = roleRepository;
+        this.areaRepository = areaRepository;
     }
 
     @Override
@@ -43,14 +53,16 @@ public class UserServiceImpl implements UserService {
 
         RoleEntity rol = roleRepository.findById(dto.getIdRol())
                 .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + dto.getIdRol()));
+        String email = normalizeEmail(dto.getEmail());
+        requireEmailAvailable(email, null);
 
         UserEntity user = new UserEntity();
         user.setUserEntraId(dto.getUserEntraId());
-        user.setEmail(dto.getEmail());
-        user.setNombre(dto.getNombre());
-        user.setApellido(dto.getApellido());
-        user.setTelefono(dto.getTelefono());
-        user.setArea(dto.getArea());
+        user.setEmail(email);
+        user.setNombre(normalizeText(dto.getNombre()));
+        user.setApellido(normalizeText(dto.getApellido()));
+        user.setTelefono(normalizePhone(dto.getTelefono()));
+        user.setArea(resolveArea(dto.getIdArea()));
         user.setEmpresa(empresa);
         user.setRol(rol);
         user.setEstado(EntityStatus.ACTIVO);
@@ -141,6 +153,85 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    // EMAIL es único en USUARIOS (también entre usuarios dados de baja): sin esta
+    // verificación el insert fallaría y el handler genérico respondería 500.
+    private void requireEmailAvailable(String email, Long currentUserId) {
+        userRepository.findByEmailIgnoreCase(email)
+                .filter(existing -> !existing.getId().equals(currentUserId))
+                .ifPresent(existing -> {
+                    throw new ConflictException("Ya existe un usuario con el correo " + email
+                            + (existing.getEstado() == EntityStatus.ACTIVO ? "" : " (dado de baja)"));
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AreaDto> getActiveAreas() {
+        return areaRepository.findByEstadoOrderByNombreAsc(EntityStatus.ACTIVO).stream()
+                .map(a -> new AreaDto(a.getId(), a.getNombre()))
+                .collect(Collectors.toList());
+    }
+
+    // Nombre con la primera letra en mayúscula; si ya existe (sin distinguir mayúsculas)
+    // se rechaza en vez de crear un duplicado como "operaciones" junto a "Operaciones".
+    @Override
+    @Transactional
+    public AreaDto createArea(AreaRequestDto dto) {
+        String nombre = capitalizeFirst(normalizeText(dto.nombre()));
+        areaRepository.findByNombreIgnoreCase(nombre).ifPresent(existing -> {
+            throw new ConflictException("Ya existe el área " + existing.getNombre());
+        });
+        AreaEntity area = new AreaEntity();
+        area.setNombre(nombre);
+        area = areaRepository.save(area);
+        return new AreaDto(area.getId(), area.getNombre());
+    }
+
+    private AreaEntity resolveArea(Long idArea) {
+        if (idArea == null) {
+            return null;
+        }
+        return areaRepository.findById(idArea)
+                .filter(a -> a.getEstado() == EntityStatus.ACTIVO)
+                .orElseThrow(() -> new ResourceNotFoundException("Área no encontrada con ID: " + idArea));
+    }
+
+    // Sanitización en el borde del servicio: espacios repetidos fuera, correo en minúsculas
+    // y teléfono como +56XXXXXXXXX (mismo formato que ms-workorders).
+    private static String normalizeText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String clean = value.replaceAll("[<>]", "").replaceAll("\\s+", " ").trim();
+        return clean.isEmpty() ? null : clean;
+    }
+
+    private static String normalizeEmail(String value) {
+        String clean = normalizeText(value);
+        return clean == null ? null : clean.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private static String normalizePhone(String value) {
+        String clean = normalizeText(value);
+        if (clean == null) {
+            return null;
+        }
+        String digits = clean.replaceAll("\\D", "");
+        if (digits.length() == 11 && digits.startsWith("56")) {
+            digits = digits.substring(2);
+        }
+        return digits.length() == 9 ? "+56" + digits : clean;
+    }
+
+    private static String capitalizeFirst(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        int first = value.codePointAt(0);
+        return new StringBuilder().appendCodePoint(Character.toUpperCase(first))
+                .append(value.substring(Character.charCount(first))).toString();
+    }
+
     private static String truncate(String value, int max) {
         return value.length() > max ? value.substring(0, max) : value;
     }
@@ -156,12 +247,14 @@ public class UserServiceImpl implements UserService {
 
         RoleEntity rol = roleRepository.findById(dto.getIdRol())
                 .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + dto.getIdRol()));
+        String email = normalizeEmail(dto.getEmail());
+        requireEmailAvailable(email, id);
 
-        user.setEmail(dto.getEmail());
-        user.setNombre(dto.getNombre());
-        user.setApellido(dto.getApellido());
-        user.setTelefono(dto.getTelefono());
-        user.setArea(dto.getArea());
+        user.setEmail(email);
+        user.setNombre(normalizeText(dto.getNombre()));
+        user.setApellido(normalizeText(dto.getApellido()));
+        user.setTelefono(normalizePhone(dto.getTelefono()));
+        user.setArea(resolveArea(dto.getIdArea()));
         user.setEmpresa(empresa);
         user.setRol(rol);
 
@@ -188,6 +281,23 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoleResponseDto> getAllRoles() {
+        return roleRepository.findAll().stream()
+                .map(r -> new RoleResponseDto(r.getId(), r.getCodigo(), r.getNombre(), r.getDescripcion()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CompanyResponseDto> getActiveCompanies() {
+        return companyRepository.findAll().stream()
+                .filter(c -> c.getEstado() == EntityStatus.ACTIVO)
+                .map(c -> new CompanyResponseDto(c.getId(), c.getRazonSocial(), c.getRut(), c.getTipoEmpresa()))
+                .collect(Collectors.toList());
+    }
+
     private UserResponseDto mapToResponseDto(UserEntity entity) {
         UserResponseDto dto = new UserResponseDto();
         dto.setId(entity.getId());
@@ -196,7 +306,10 @@ public class UserServiceImpl implements UserService {
         dto.setNombre(entity.getNombre());
         dto.setApellido(entity.getApellido());
         dto.setTelefono(entity.getTelefono());
-        dto.setArea(entity.getArea());
+        dto.setArea(entity.getArea() != null ? entity.getArea().getNombre() : null);
+        dto.setIdArea(entity.getArea() != null ? entity.getArea().getId() : null);
+        dto.setIdEmpresa(entity.getEmpresa().getId());
+        dto.setIdRol(entity.getRol().getId());
         dto.setEstado(entity.getEstado().name());
         dto.setNombreEmpresa(entity.getEmpresa().getRazonSocial());
         dto.setNombreRol(entity.getRol().getNombre());

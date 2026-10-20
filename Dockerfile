@@ -31,5 +31,10 @@ USER appuser
 
 EXPOSE 8082
 
+# preferIPv4Stack evita que la JVM intente conectarse por IPv6 a servicios
+# externos (ej. login.microsoftonline.com para validar el JWT) cuando el
+# contenedor corre en una red Docker sin salida IPv6 real ("Network unreachable").
+ENV JAVA_OPTS="-Djava.net.preferIPv4Stack=true"
+
 # Configuración de límites de memoria JVM
-ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -XX:+UseG1GC -XX:MaxRAMPercentage=75.0 $JAVA_OPTS -jar app.jar"]

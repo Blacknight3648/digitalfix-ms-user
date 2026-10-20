@@ -1,5 +1,9 @@
 package df.digitalfix_ms_user.service;
 
+import df.digitalfix_ms_user.dto.AreaDto;
+import df.digitalfix_ms_user.dto.AreaRequestDto;
+import df.digitalfix_ms_user.dto.CompanyResponseDto;
+import df.digitalfix_ms_user.dto.RoleResponseDto;
 import df.digitalfix_ms_user.dto.UserRequestDto;
 import df.digitalfix_ms_user.dto.UserResponseDto;
 
@@ -18,4 +22,9 @@ public interface UserService {
     UserResponseDto updateUser(Long id, UserRequestDto userRequestDto);
     void deleteUserLogical(Long id);
     List<UserResponseDto> getAllUsers();
+    // Catálogos para la gestión de usuarios (selectores de rol y empresa).
+    List<RoleResponseDto> getAllRoles();
+    List<CompanyResponseDto> getActiveCompanies();
+    List<AreaDto> getActiveAreas();
+    AreaDto createArea(AreaRequestDto dto);
 }

@@ -3,6 +3,7 @@ package df.digitalfix_ms_user.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserRequestDto {
@@ -12,7 +13,8 @@ public class UserRequestDto {
     private String userEntraId;
 
     @NotBlank(message = "El email es requerido")
-    @Email(message = "Formato de email inválido")
+    @Email(regexp = "^[^@\\s]+@[^@\\s]+\\.[A-Za-z]{2,}$", message = "Formato de email inválido (ej. nombre@empresa.cl)")
+    @Size(max = 100, message = "El email no debe superar los 100 caracteres")
     private String email;
 
     @NotBlank(message = "El nombre es requerido")
@@ -23,11 +25,14 @@ public class UserRequestDto {
     @Size(max = 50, message = "El apellido no debe superar los 50 caracteres")
     private String apellido;
 
-    @Size(max = 20, message = "El teléfono no debe superar los 20 caracteres")
+    // Mismo formato que ms-workorders: +56 y 9 dígitos (móvil +569XXXXXXXX o fijo +56 2 XXXX XXXX).
+    // UserServiceImpl lo normaliza antes de guardar; aquí se aceptan espacios y guiones.
+    @Pattern(regexp = "^\\s*\\+?\\s*(56)?[\\s-]*\\d([\\s-]*\\d){8}\\s*$",
+            message = "El teléfono debe ser chileno: +56 9 1234 5678")
     private String telefono;
 
-    @Size(max = 80, message = "El área no debe superar los 80 caracteres")
-    private String area;
+    // Área del catálogo AREAS (opcional).
+    private Long idArea;
 
     @NotNull(message = "El ID de la empresa es requerido")
     private Long idEmpresa;
@@ -77,12 +82,12 @@ public class UserRequestDto {
         this.telefono = telefono;
     }
 
-    public String getArea() {
-        return area;
+    public Long getIdArea() {
+        return idArea;
     }
 
-    public void setArea(String area) {
-        this.area = area;
+    public void setIdArea(Long idArea) {
+        this.idArea = idArea;
     }
 
     public Long getIdEmpresa() {

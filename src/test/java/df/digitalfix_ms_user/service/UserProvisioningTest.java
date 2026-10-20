@@ -5,6 +5,7 @@ import df.digitalfix_ms_user.model.CompanyEntity;
 import df.digitalfix_ms_user.model.RoleEntity;
 import df.digitalfix_ms_user.model.UserEntity;
 import df.digitalfix_ms_user.model.enums.EntityStatus;
+import df.digitalfix_ms_user.repository.AreaRepository;
 import df.digitalfix_ms_user.repository.CompanyRepository;
 import df.digitalfix_ms_user.repository.RoleRepository;
 import df.digitalfix_ms_user.repository.UserRepository;
@@ -30,7 +31,8 @@ class UserProvisioningTest {
     private final UserRepository userRepository = mock(UserRepository.class);
     private final CompanyRepository companyRepository = mock(CompanyRepository.class);
     private final RoleRepository roleRepository = mock(RoleRepository.class);
-    private final UserServiceImpl service = new UserServiceImpl(userRepository, companyRepository, roleRepository);
+    private final AreaRepository areaRepository = mock(AreaRepository.class);
+    private final UserServiceImpl service = new UserServiceImpl(userRepository, companyRepository, roleRepository, areaRepository);
 
     @BeforeEach
     void setUp() {

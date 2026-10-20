@@ -11,6 +11,9 @@ public class UserResponseDto {
     private String apellido;
     private String telefono;
     private String area;
+    private Long idArea;
+    private Long idEmpresa;
+    private Long idRol;
     private String estado;
     
     // Nombres resueltos para el cliente
@@ -78,6 +81,30 @@ public class UserResponseDto {
 
     public void setArea(String area) {
         this.area = area;
+    }
+
+    public Long getIdArea() {
+        return idArea;
+    }
+
+    public void setIdArea(Long idArea) {
+        this.idArea = idArea;
+    }
+
+    public Long getIdEmpresa() {
+        return idEmpresa;
+    }
+
+    public void setIdEmpresa(Long idEmpresa) {
+        this.idEmpresa = idEmpresa;
+    }
+
+    public Long getIdRol() {
+        return idRol;
+    }
+
+    public void setIdRol(Long idRol) {
+        this.idRol = idRol;
     }
 
     public String getEstado() {
