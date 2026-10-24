@@ -1,3 +1,65 @@
+server:
+  port: ${PORT:${SERVER_PORT:8082}}
+  servlet:
+    context-path: /
+
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:digitalfix-ms-user/.env[.properties]
+      - optional:file:../.env[.properties]
   application:
     name: digitalfix-ms-user
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:oracle:thin:@clx44joct2djmlz9_high?TNS_ADMIN=./wallet}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD}}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        # Relaciones LAZY en lotes de hasta 100 (IN) en vez de una consulta por fila: evita el N+1
+        # en los listados, que contra Oracle Autonomous cuesta ~40 ms de red por consulta.
+        default_batch_fetch_size: 100
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    table: flyway_schema_history_user
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/${AZURE_TENANT_ID:common}/v2.0
+          audiences: ${AZURE_CLIENT_ID}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  operationsSorter: method
+
+management:
+  endpoint:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoints:
+    web:
+      show-details: always
+
