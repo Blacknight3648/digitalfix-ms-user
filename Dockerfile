@@ -36,5 +36,8 @@ EXPOSE 8082
 # contenedor corre en una red Docker sin salida IPv6 real ("Network unreachable").
 ENV JAVA_OPTS="-Djava.net.preferIPv4Stack=true"
 
-# Configuración de límites de memoria JVM
-ENTRYPOINT ["sh", "-c", "java -XX:+UseG1GC -XX:MaxRAMPercentage=75.0 $JAVA_OPTS -jar app.jar"]
+# Los límites de memoria de la JVM los fija digitalfix-infrastructure/docker-compose.yml
+# (mem_limit + JDK_JAVA_OPTIONS), igual que en los demás servicios. Un -XX:MaxRAMPercentage
+# aquí pisaría ese valor: al 75 % del límite del contenedor no queda espacio para metaspace
+# e hilos (OOMKilled), y sin límite toma el 75 % de la RAM de toda la EC2.
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
