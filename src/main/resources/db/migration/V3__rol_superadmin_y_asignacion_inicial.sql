@@ -27,7 +27,7 @@ WHEN NOT MATCHED THEN
 -- lo vincula por correo en su primer login (conservando este rol).
 MERGE INTO USUARIOS u
 USING (
-    SELECT 'sol.medina@gmail.com' AS EMAIL, 'SOLGREY' AS NOMBRE, 'NATASHA MARIA MEDINA LIRA' AS APELLIDO,
+    SELECT 'sol.medina@duocuc.cl' AS EMAIL, 'SOLGREY' AS NOMBRE, 'NATASHA MARIA MEDINA LIRA' AS APELLIDO,
            'SUPERADMIN' AS CODIGO_ROL FROM DUAL
     UNION ALL
     SELECT 'cr.ossesg@duocuc.cl', 'CRISTOPHER', 'OSSES GUERRA', 'SUPERADMIN' FROM DUAL
